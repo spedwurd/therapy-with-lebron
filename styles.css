@@ -1,0 +1,57 @@
+@font-face {
+    font-family: 'Diddy';
+    src:  url('recoleta-font.otf');
+    font-weight: normal;
+    font-style: normal;
+}
+
+body { 
+    margin: 0;
+    padding: 20px;
+    font-family: Arial, sans-serif;
+    text-align: center;
+    background-color: lightyellow;
+    font-family: 'Diddy';
+}
+.container {
+    position: relative;
+    margin: 0 auto;
+    width: 640px;
+}
+video { 
+    width: 100%; 
+    height: auto; 
+}
+canvas { 
+    position: absolute; 
+    top: 0; 
+    left: 0; 
+}
+#emotion {
+    margin-top: 10px;
+    font-size: 24px;
+    font-weight: bold;
+}
+h1 {
+    color: #333;
+}
+
+.controls {
+    margin-top: 10px;
+    text-align: center;
+}
+
+.button {
+    background-color: #4CAF50;
+    border: none;
+    color: white;
+    padding: 10px 20px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+    margin: 4px 2px;
+    cursor: pointer;
+    border-radius: 4px;
+}
+</style>

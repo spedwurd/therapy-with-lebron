@@ -1,18 +1,26 @@
 <!DOCTYPE html>
-<html>
-    <head>
-        <title>test</title>
-        <meta charset="utf-8">
-        <meta name="viewport" content="initial-scale=1.0, width=device-width">
-        <style src="styles.css"></style>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Face Detection with Emotion Recognition</title>
+    <link rel="stylesheet" href="styles.css"></link>
+</head>
+<body>
+    <h1>Facial Emotion Recognition</h1>
+    <div class="container">
+        <video id="video" width="640" height="480" autoplay></video>
+        <canvas id="canvas" width="640" height="480"></canvas>
+    </div>
+    <div id="emotion">No face detected</div>
+    <div id="savedEmotion"></div>
 
-        <!-- Load Face-api.js from CDN FIRST -->
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/face-api.js/1.0.1/face-api.min.js"></script>
-        <!-- Then load your script.js -->
-        <script src="script.js"></script>
-    </head>
-    <body>
-        <video id="localVideo" autoplay playsinline></video>
-        <video id="video" width="640" height="480" autoplay muted></video>
-    </body>
+    <!-- Import TensorFlow.js and the proper models -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/face-landmarks-detection"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/face-detection"></script>
+    <script src="app.js"></script> 
+   
+
+</body>
 </html>
