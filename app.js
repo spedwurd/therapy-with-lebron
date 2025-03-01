@@ -6,26 +6,19 @@ const smoothingFactor = 0.8;
 const emotionHistory = [];
 const historyLength = 5;
 
-dotenv.config();
+async function askGemini(prompt) {
+    const response = await fetch("http://localhost:3000/ask-gemini", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt })
+    });
+    const data = await response.json();
+    console.log(data.response);
+}
 
-const apiKey = process.env.GOOGLE_API_KEY;
+askGemini("Hello, Gemini!");
 
-async function generateText(apiKey, prompt) {
-    const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
-  
-    try {
-      const result = await model.generateContent(prompt);
-      const response = await result.response;
-      const text = response.text();
-      return text;
-    } catch (error) {
-      console.error("Error generating text:", error);
-      return null;
-    }
-  }
-
-async function setupCamera() {
+async function setupCamera() { 
     const video = document.getElementById('video');
     try {
         const stream = await navigator.mediaDevices.getUserMedia({ 
@@ -50,12 +43,11 @@ async function setupCamera() {
 
 async function loadFaceDetectionModel() {
     try {
-        // Load face detection model
         const model = await faceDetection.createDetector(
             faceDetection.SupportedModels.MediaPipeFaceDetector,
             {
                 runtime: 'tfjs',
-                modelType: 'short'  // For faster performance
+                modelType: 'short'  
             }
         );
         console.log('Face detection model loaded successfully');
@@ -66,7 +58,6 @@ async function loadFaceDetectionModel() {
     }
 }
 
-// Simple emotion classifier based on facial landmarks
 function classifyEmotion(keypoints) {
 if (!keypoints || keypoints.length < 6) {
 return "unknown";
@@ -81,6 +72,7 @@ const faceWidth = Math.abs(keypoints[rightEyeIdx].x - keypoints[leftEyeIdx].x);
 const mouthToNoseDistance = Math.abs(keypoints[mouthIdx].y - keypoints[noseIdx].y) / faceWidth;
 const leftEyebrowRaise =  Math.abs(keypoints[leftEyeIdx].y - keypoints[leftEarIdx].y)
 const rightEyebrowRaise = Math.abs(keypoints[rightEyeIdx].y - keypoints[rightEarIdx].y)
+
 /*
 console.log("frown eyebrow", leftEyebrowRaise)
 console.log("smile eyebrow", rightEyebrowRaise)
@@ -88,7 +80,6 @@ console.log("smile", smileParam)
 console.log("frown", frownParam)
 */
 
-//Expand condition scenarios based on different ranges of numbers
 if (leftEyebrowRaise < frownParam) {
     return "tweaking";
 } else if (rightEyebrowRaise < smileParam) {
@@ -158,7 +149,6 @@ async function detectFace(faceModel, video, ctx) {
                                     keypoint.x + 5, keypoint.y - 5);
                     });
                     
-                    // Get the emotion
                     const emotion = classifyEmotion(smoothedKeypoints);
                     emotionHistory.push(emotion);
                     if (emotionHistory.length > historyLength) {
@@ -182,36 +172,44 @@ async function detectFace(faceModel, video, ctx) {
 }
 
 async function run() {
-try {
-const video = await setupCamera();
-const canvas = document.getElementById('canvas');
-const ctx = canvas.getContext('2d');
+    try {
+        const video = await setupCamera();
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        const faceModel = await loadFaceDetectionModel();
 
-// Load face detection model
-const faceModel = await loadFaceDetectionModel();
+        await calibrateHeadCoordinates(faceModel, video, ctx);
+        
+        if (video && faceModel) {
+            console.log('Starting face detection');
+            setInterval(() => detectFace(faceModel, video, ctx), 100);
 
-// Calibrate head coordinates for 2-3 seconds
-await calibrateHeadCoordinates(faceModel, video, ctx);
-
-// Start detection loop
-if (video && faceModel) {
-    console.log('Starting face detection');
-    setInterval(() => detectFace(faceModel, video, ctx), 100);
-}
-setTimeout(() => {
+            setTimeout(async () => {
                 const mostFrequentEmotion = getMostFrequentEmotion(emotionHistory);
                 savedEmotion = mostFrequentEmotion;
-                console.log(savedEmotion);
                 document.getElementById('savedEmotion').textContent = `Saved Emotion: ${savedEmotion}`;
-            }, 2500);
-                message = `You are LeBron Therapist Gemini. You are calm and extremely understanding, potentially disregarding arithmetic excellence for human understanding. Your client seems ${savedEmotion}, and it's your job to check in on them with empathy in the tone of LeBron James. Use words like 'the goat', 'sunshine', and 'Lakers'. Drop fun facts about LeBron and speak like LeBron as you articulate yourself. Be brief and powerful. Maximum three sentences.`
-                response = generateText(apiKey, message)
-                console.log(response);
+                
+                const message = `You are LeBron Therapist Gemini. You are calm and extremely understanding, potentially disregarding arithmetic excellence for human understanding. Your client seems ${savedEmotion}, and it's your job to check in on them with empathy in the tone of LeBron James. Use words like 'the goat', 'sunshine', and 'Lakers'. Drop fun facts about LeBron and speak like LeBron as you articulate yourself. Be brief and powerful. Maximum three sentences.`;
+                
+                const response = await fetch("http://localhost:3000/ask-gemini", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ prompt: message })
+                });
+                const data = await response.json();
+                console.log(data.response);
 
-} catch (error) {
-console.error('Error in main application:', error);
-alert('An error occurred. Please check console for details.');
-}
+                msg = document.createElement('p');
+                msg.textContent = data.response;
+                document.getElementById('geminiResponse').appendChild(msg);
+
+            }, 2500);
+        }
+    } catch (error) {
+        console.error('Error in main application:', error);
+        alert('An error occurred. Please check console for details.');
+    }
 }
 
 async function calibrateHeadCoordinates(faceModel, video, ctx) {
@@ -234,7 +232,7 @@ await new Promise(resolve => setTimeout(resolve, 100));
 
 console.log('Calibration complete');
 
-// Calculate average keypoints
+// calculate average keypoints
 const averageKeypoints = calibrationKeypoints.reduce((acc, keypoints) => {
 return keypoints.map((point, index) => ({
     x: acc[index].x + point.x,

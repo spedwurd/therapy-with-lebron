@@ -7,19 +7,22 @@
     <link rel="stylesheet" href="styles.css"></link>
 </head>
 <body>
-    <h1>Facial Emotion Recognition</h1>
+    <h1>LeBron Therapy</h1>
     <div class="container">
         <video id="video" width="640" height="480" autoplay></video>
         <canvas id="canvas" width="640" height="480"></canvas>
     </div>
     <div id="emotion">No face detected</div>
     <div id="savedEmotion"></div>
+    <div id="geminiResponse">
 
+    </div>
     <!-- Import TensorFlow.js and the proper models -->
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/face-landmarks-detection"></script>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/face-detection"></script>
     <script src="app.js"></script> 
+    <script type="module" src="server.js"></script>
    
 
 </body>
