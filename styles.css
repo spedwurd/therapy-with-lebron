@@ -26,14 +26,20 @@ video {
     height: 10%; 
 }
 canvas {
-    width: 205px;
-    height: 246px;
+    width: 375px;
+    height: 250px;
 }
 #emotion {
     margin-top: 10px;
     font-size: 24px;
     font-weight: bold;
 }
+
+img {
+    width: 375px;
+    height: 250px;
+}
+
 h1 {
     color: #333;
 }
@@ -70,4 +76,26 @@ h1 {
     height: 125px;
     border-radius: 50%;
     background-color: #4CAF50;
+}
+
+.chat-input-container {
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    background-color: #fff;
+    padding: 10px;
+    box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1);
+}
+
+#send-button {
+    padding: 10px 20px;
+    margin-left: 7px;
+    font-size: 16px;
+    cursor: pointer;
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
 }

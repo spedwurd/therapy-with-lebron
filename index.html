@@ -8,16 +8,22 @@
     <link rel="icon" type="image/x-icon" href="/assets/favicon.ico">
 </head>
 <body>
-    <h1>LeBron Therapy</h1>
+    <h1>Therapy with LeBron</h1>
     <div class="chat-container">
-        <img src="/assets/lebron.jpeg" alt="where is lebron 💔">
+        <img src="/assets/lebron.jpg" alt="where is lebron 💔">
         <button id="start-button" onclick="run()">START</button>
-        <video hidden id="video" width="640" height="480" autoplay></video>
         <canvas id="canvas" width="640" height="480"></canvas>
+        <video hidden id="video" width="640" height="480" autoplay></video>
     </div>
     <div id="emotion">No face detected</div>
+    <div id="status">Provided status</div>
     <div id="savedEmotion"></div>
     <div id="geminiResponse">
+
+    <div class="chat-input-container">
+        <input type="text" id="userInput" placeholder="Type your message here...">
+        <button id="send-button" onclick="askLeBron()">Send</button>
+    </div>
 
     </div>
     <!-- Import TensorFlow.js and the proper models -->

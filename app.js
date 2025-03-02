@@ -5,19 +5,70 @@ let frownParam = 0;
 const smoothingFactor = 0.8;
 const emotionHistory = [];
 const historyLength = 5;
+let savedEmotion = "neutral"; 
 
+/**
+ * Send user input to the LeBron AI and get a response
+ */
 async function askLeBron() {
-    prompt = document.getElementById('geminiResponse').innerText;
-    console.log(prompt);
-    const response = await fetch("http://localhost:3000/ask-gemini", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: 'Remember that you are still LeBron Gemini Therapist - the empathetic, encouraging, and pop culturally connected LeBron James. You are the sunshine.' + JSON.stringify({ prompt })
-    });
+    const userInput = document.getElementById('userInput').value;
+    console.log(userInput)
+    if (!userInput.trim()) return;
+    
+    try {
+        appendMessage('user', userInput);
+        
+        document.getElementById('userInput').value = '';
+        
+        const loadingEl = document.createElement('div');
+        loadingEl.className = 'loading';
+        loadingEl.textContent = 'LeBron is typing...';
+        document.getElementById('geminiResponse').appendChild(loadingEl);
+        
+        const response = await fetch("http://localhost:3000/ask-gemini", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ 
+                prompt: `Remember that you are still LeBron Gemini Therapist - the empathetic, encouraging, and pop culturally connected LeBron James. You are the sunshine. The user says: ${userInput}. Max 3 sentences.`
+            })
+        });
+        
+        if (!response.ok) {
+            throw new Error(`Server responded with status: ${response.status}`);
+        }
+        
         const data = await response.json();
-    console.log(data.response);
+        // Remove loading indicator
+        document.getElementById('geminiResponse').removeChild(loadingEl);
+        
+        // Add AI response to chat
+        appendMessage('ai', data.response);
+    } catch (error) {
+        console.error('Error communicating with LeBron AI:', error);
+        document.getElementById('geminiResponse').innerHTML += `<p class="error">Sorry, there was an error connecting with LeBron. Please try again.</p>`;
+    }
 }
 
+/**
+ * Add a message to the chat interface
+ */
+function appendMessage(sender, text) {
+    const messageEl = document.createElement('div');
+    messageEl.className = `message ${sender}-message`;
+    
+    const contentEl = document.createElement('p');
+    contentEl.textContent = text;
+    messageEl.appendChild(contentEl);
+    
+    document.getElementById('geminiResponse').appendChild(messageEl);
+    
+    // Auto scroll to bottom
+    document.getElementById('geminiResponse').scrollTop = document.getElementById('geminiResponse').scrollHeight;
+}
+
+/**
+ * Initialize the camera for face tracking
+ */
 async function setupCamera() { 
     const video = document.getElementById('video');
     try {
@@ -38,9 +89,13 @@ async function setupCamera() {
     } catch (error) {
         console.error('Error accessing camera:', error);
         alert('Error accessing camera. Please ensure camera permissions are enabled.');
+        return null;
     }
 }
 
+/**
+ * Load the TensorFlow.js face detection model
+ */
 async function loadFaceDetectionModel() {
     try {
         const model = await faceDetection.createDetector(
@@ -55,44 +110,42 @@ async function loadFaceDetectionModel() {
     } catch (error) {
         console.error('Error loading face detection model:', error);
         alert('Error loading face detection model. Please check console for details.');
+        return null;
     }
 }
 
+/**
+ * Classify emotion based on facial keypoints
+ */
 function classifyEmotion(keypoints) {
-if (!keypoints || keypoints.length < 6) {
-return "unknown";
+    if (!keypoints || keypoints.length < 6) {
+        return "unknown";
+    }
+
+    try {
+        const rightEyeIdx = 0, leftEyeIdx = 1, noseIdx = 2, mouthIdx = 3, rightEarIdx = 4, leftEarIdx = 5;
+
+        // Extract relevant facial features
+        const leftEyebrowRaise = Math.abs(keypoints[leftEyeIdx].y - keypoints[leftEarIdx].y);
+        const rightEyebrowRaise = Math.abs(keypoints[rightEyeIdx].y - keypoints[rightEarIdx].y);
+
+        // Determine emotion based on calibrated parameters
+        if (leftEyebrowRaise < frownParam) {
+            return "tweaking";
+        } else if (rightEyebrowRaise < smileParam) {
+            return "sunshine";
+        } else {
+            return "neutral";
+        }
+    } catch (error) {
+        console.error("Error in emotion classification:", error);
+        return "unknown";
+    }
 }
 
-try {
-let rightEyeIdx = 0, leftEyeIdx = 1, noseIdx = 2, mouthIdx = 3, rightEarIdx = 4, leftEarIdx = 5;
-
-// Example Features:
-const faceLength = Math.abs(keypoints[mouthIdx].y - keypoints[leftEyeIdx].y);
-const faceWidth = Math.abs(keypoints[rightEyeIdx].x - keypoints[leftEyeIdx].x);
-const mouthToNoseDistance = Math.abs(keypoints[mouthIdx].y - keypoints[noseIdx].y) / faceWidth;
-const leftEyebrowRaise =  Math.abs(keypoints[leftEyeIdx].y - keypoints[leftEarIdx].y)
-const rightEyebrowRaise = Math.abs(keypoints[rightEyeIdx].y - keypoints[rightEarIdx].y)
-
-/*
-console.log("frown eyebrow", leftEyebrowRaise)
-console.log("smile eyebrow", rightEyebrowRaise)
-console.log("smile", smileParam)
-console.log("frown", frownParam)
-*/
-
-if (leftEyebrowRaise < frownParam) {
-    return "tweaking";
-} else if (rightEyebrowRaise < smileParam) {
-    return "sunshine";
-} else {
-    return "neutral";
-}
-} catch (error) {
-console.error("Error in emotion classification:", error);
-return "unknown";
-}
-}
-
+/**
+ * Apply smoothing to keypoints to reduce jitter
+ */
 function smoothKeypoints(newKeypoints) {
     if (previousKeypoints.length === 0) {
         previousKeypoints = newKeypoints;
@@ -101,11 +154,17 @@ function smoothKeypoints(newKeypoints) {
 
     return newKeypoints.map((point, index) => ({
         x: smoothingFactor * previousKeypoints[index].x + (1 - smoothingFactor) * point.x,
-        y: smoothingFactor * previousKeypoints[index].y + (1 - smoothingFactor) * point.y
+        y: smoothingFactor * previousKeypoints[index].y + (1 - smoothingFactor) * point.y,
+        name: point.name // Preserve name property if present
     }));
 }
 
+/**
+ * Get the most frequent emotion from history
+ */
 function getMostFrequentEmotion(emotions) {
+    if (!emotions || emotions.length === 0) return "neutral";
+    
     const frequency = {};
     emotions.forEach(emotion => {
         frequency[emotion] = (frequency[emotion] || 0) + 1;
@@ -113,7 +172,12 @@ function getMostFrequentEmotion(emotions) {
     return Object.keys(frequency).reduce((a, b) => frequency[a] > frequency[b] ? a : b);
 }
 
+/**
+ * Process video frames and detect faces/emotions
+ */
 async function detectFace(faceModel, video, ctx) {
+    if (!faceModel || !video || !ctx) return;
+    
     try {
         const predictions = await faceModel.estimateFaces(video);
         const emotionElement = document.getElementById('emotion');
@@ -142,13 +206,14 @@ async function detectFace(faceModel, video, ctx) {
                         ctx.arc(keypoint.x, keypoint.y, 4, 0, 2 * Math.PI);
                         ctx.fill();
                         
-                        // Optionally label each keypoint
+                        // Label each keypoint
                         ctx.fillStyle = 'white';
                         ctx.font = '10px Arial';
                         ctx.fillText(keypoint.name || `${smoothedKeypoints.indexOf(keypoint)}`, 
                                     keypoint.x + 5, keypoint.y - 5);
                     });
                     
+                    // Classify and track emotion
                     const emotion = classifyEmotion(smoothedKeypoints);
                     emotionHistory.push(emotion);
                     if (emotionHistory.length > historyLength) {
@@ -171,59 +236,12 @@ async function detectFace(faceModel, video, ctx) {
     }
 }
 
-async function run() {
-    try {
-        const video = await setupCamera();
-        const canvas = document.getElementById('canvas');
-        const ctx = canvas.getContext('2d');
-        
-        const faceModel = await loadFaceDetectionModel();
-
-        await calibrateHeadCoordinates(faceModel, video, ctx);
-        
-        if (video && faceModel) {
-            console.log('Starting face detection');
-            setInterval(() => detectFace(faceModel, video, ctx), 100);
-
-            setTimeout(async () => {
-                const mostFrequentEmotion = getMostFrequentEmotion(emotionHistory);
-                savedEmotion = mostFrequentEmotion;
-                document.getElementById('savedEmotion').textContent = `Saved Emotion: ${savedEmotion}`;
-                
-                const message = `You are LeBron Therapist Gemini. You are calm and extremely understanding, potentially disregarding arithmetic excellence for human understanding. Your client seems ${savedEmotion}, and it's your job to check in on them with empathy in the tone of LeBron James. Use words like 'the goat', 'sunshine', and 'Lakers'. Drop fun facts about LeBron and speak like LeBron as you articulate yourself. Be brief and powerful. Maximum three sentences.`;
-                
-                const response = await fetch("http://localhost:3000/ask-gemini", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ prompt: message })
-                });
-                const data = await response.json();
-                console.log(data.response);
-
-                msg = document.createElement('p');
-                msg.textContent = data.response;
-                user_input = document.createElement('input');
-                user_input.setAttribute('type', 'text');
-                user_input.setAttribute('class', 'userInput');
-                user_input.setAttribute('placeholder', 'Enter your response here');
-                submit = document.createElement('button');
-                submit.textContent = 'Submit';
-                submit.setAttribute('class', 'submit');
-                submit.setAttribute('onclick', 'askLeBron()');
-                document.getElementById('geminiResponse').appendChild(msg);
-                document.getElementById('geminiResponse').appendChild(user_input);
-                document.getElementById('geminiResponse').appendChild(submit);
-                document.getElementById('userInput').focus();
-
-            }, 2500);
-        }
-    } catch (error) {
-        console.error('Error in main application:', error);
-        alert('An error occurred. Please check console for details.');
-    }
-}
-
+/**
+ * Calibrate facial parameters based on neutral expression
+ */
 async function calibrateHeadCoordinates(faceModel, video, ctx) {
+    if (!faceModel || !video || !ctx) return;
+    
     const calibrationDuration = 3000; // 3 seconds
     const calibrationKeypoints = [];
     const emotionElement = document.getElementById('emotion');
@@ -244,22 +262,8 @@ async function calibrateHeadCoordinates(faceModel, video, ctx) {
         // Add calibration progress animation
         const progress = Math.min(100, Math.round((Date.now() - startTime) / calibrationDuration * 100));
         
-        // Draw progress bar background
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
-        ctx.fillRect(320 - 150, 400, 300, 20);
-        
         // Draw progress bar
-        ctx.fillStyle = 'green';
-        ctx.fillRect(320 - 150, 400, 300 * progress / 100, 20);
-        
-        // Draw progress bar border
-        ctx.strokeStyle = 'white';
-        ctx.strokeRect(320 - 150, 400, 300, 20);
-        
-        // Add text instructions
-        ctx.fillStyle = 'white';
-        ctx.font = '16px Arial';
-        ctx.fillText('Calibrating - Keep a neutral expression', 320 - 140, 390);
+        drawProgressBar(ctx, progress, 'Calibrating - Keep a neutral expression');
         
         await new Promise(resolve => setTimeout(resolve, 100));
     }
@@ -268,36 +272,165 @@ async function calibrateHeadCoordinates(faceModel, video, ctx) {
     emotionElement.textContent = "Calibration complete";
 
     // Calculate average keypoints
-    const averageKeypoints = calibrationKeypoints.reduce((acc, keypoints) => {
-        return keypoints.map((point, index) => ({
-            x: acc[index].x + point.x,
-            y: acc[index].y + point.y
-        }));
-    }, Array(calibrationKeypoints[0].length).fill({ x: 0, y: 0 }))
-    .map(point => ({
-        x: point.x / calibrationKeypoints.length,
-        y: point.y / calibrationKeypoints.length
-    }));
+    if (calibrationKeypoints.length === 0) {
+        console.error('No faces detected during calibration');
+        return;
+    }
     
-    // Show a nice completion animation
+    const averageKeypoints = calculateAverageKeypoints(calibrationKeypoints);
+    
+    // Show completion animation
+    showCalibrationComplete(ctx);
+    
+    // Update the emotion classification parameters based on the average keypoints
+    frownParam = Math.abs(averageKeypoints[1].y - averageKeypoints[5].y) - 1;
+    smileParam = Math.abs(averageKeypoints[0].y - averageKeypoints[4].y) - 3;
+    
+    console.log('Calibration parameters set:', { frownParam, smileParam });
+}
+
+/**
+ * Draw progress bar for calibration
+ */
+function drawProgressBar(ctx, progress, text) {
+    // Draw progress bar background
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+    ctx.fillRect(320 - 150, 400, 300, 20);
+    
+    // Draw progress bar
+    ctx.fillStyle = 'green';
+    ctx.fillRect(320 - 150, 400, 300 * progress / 100, 20);
+    
+    // Draw progress bar border
+    ctx.strokeStyle = 'white';
+    ctx.strokeRect(320 - 150, 400, 300, 20);
+    
+    // Add text instructions
+    ctx.fillStyle = 'white';
+    ctx.font = '16px Arial';
+    ctx.fillText(text, 320 - 140, 390);
+}
+
+/**
+ * Show calibration complete animation
+ */
+function showCalibrationComplete(ctx) {
+    // Green overlay animation
     ctx.fillStyle = 'rgba(0, 255, 0, 0.3)';
     ctx.fillRect(0, 0, 640, 480);
     ctx.fillStyle = 'white';
     ctx.font = '24px Arial';
     ctx.fillText('Calibration Complete!', 320 - 120, 240);
-    
-    // Restore normal view after 1 second
-    setTimeout(() => {
-        ctx.clearRect(0, 0, 640, 480);
-        ctx.drawImage(video, 0, 0, 640, 480);
-    }, 1000);
-    
-    // Continue with your existing logic
-    console.log(averageKeypoints);
-
-    // Update the emotion classification parameters based on the average keypoints
-    frownParam = Math.abs(averageKeypoints[1].y - averageKeypoints[5].y) - 1;
-    smileParam = Math.abs(averageKeypoints[0].y - averageKeypoints[4].y) - 3;
 }
 
-// Start the application when the page loads
+/**
+ * Calculate average keypoints from calibration data
+ */
+function calculateAverageKeypoints(calibrationKeypoints) {
+    return calibrationKeypoints.reduce((acc, keypoints) => {
+        return keypoints.map((point, index) => ({
+            x: (acc[index]?.x || 0) + point.x,
+            y: (acc[index]?.y || 0) + point.y
+        }));
+    }, [])
+    .map(point => ({
+        x: point.x / calibrationKeypoints.length,
+        y: point.y / calibrationKeypoints.length
+    }));
+}
+
+/**
+ * Initialize the chat interface
+ */
+function initializeChat(initialMessage) {
+    const container = document.getElementById('geminiResponse');
+    
+    // Add initial AI message
+    appendMessage('ai', initialMessage);
+    
+    // Add input field and submit button
+    
+    // Add event listener for Enter key
+    userInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            askLeBron();
+        }
+    });
+    
+    userInput.focus();
+}
+
+/**
+ * Main application entry point
+ */
+async function run() {
+    try {
+        // Setup UI elements for status
+        const statusElement = document.getElementById('status');
+        if (!statusElement) {
+            const statusDiv = document.createElement('div');
+            statusDiv.id = 'status';
+            document.body.appendChild(statusDiv);
+        }
+        
+        // Initialize system components
+        statusElement.textContent = "Initializing camera...";
+        const video = await setupCamera();
+        if (!video) throw new Error('Failed to setup camera');
+        
+        statusElement.textContent = "Loading face detection model...";
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const faceModel = await loadFaceDetectionModel();
+        if (!faceModel) throw new Error('Failed to load face model');
+        
+        // Calibrate the system
+        statusElement.textContent = "Starting calibration...";
+        await calibrateHeadCoordinates(faceModel, video, ctx);
+        statusElement.textContent = "Calibration complete";
+        
+        // Start face detection loop
+        console.log('Starting face detection');
+        setInterval(() => detectFace(faceModel, video, ctx), 100);
+
+        // Generate initial greeting based on detected emotion
+        setTimeout(async () => {
+            const mostFrequentEmotion = getMostFrequentEmotion(emotionHistory);
+            savedEmotion = mostFrequentEmotion;
+            document.getElementById('savedEmotion').textContent = `Detected Mood: ${savedEmotion}`;
+            
+            statusElement.textContent = "Connecting to LeBron...";
+            
+            // Construct tailored prompt based on detected emotion
+            const message = `You are LeBron Therapist Gemini. You are calm and extremely understanding, potentially disregarding arithmetic excellence for human understanding. Your client seems ${savedEmotion}, and it's your job to check in on them with empathy in the tone of LeBron James. Use words like 'the goat', 'sunshine', and 'Lakers'. Drop fun facts about LeBron and speak like LeBron as you articulate yourself. Be brief and powerful. Maximum three sentences.`;
+            
+            try {
+                const response = await fetch("http://localhost:3000/ask-gemini", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ prompt: message })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`Server responded with status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                console.log(data.response);
+                
+                // Initialize chat with LeBron's greeting
+                initializeChat(data.response);
+                statusElement.textContent = "LeBron is ready to chat";
+                
+            } catch (error) {
+                console.error('Error getting initial response:', error);
+                initializeChat("Hey sunshine, LeBron here ready to chat with you! The GOAT is in the building and I'm all ears. Let's talk it out!");
+                statusElement.textContent = "Connected (offline mode)";
+            }
+        }, 2500);
+        
+    } catch (error) {
+        console.error('Error in main application:', error);
+        alert('An error occurred: ' + error.message);
+    }
+}
