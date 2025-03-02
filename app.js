@@ -15,7 +15,6 @@ var audio = new Audio('https://peregrine-results.s3.amazonaws.com/pigeon/FmNnxX5
  */
 async function askLeBron() {
     audio.play();
-    console.log('played');
     const userInput = document.getElementById('userInput').value;
     console.log(userInput)
     if (!userInput.trim()) return;
@@ -45,7 +44,39 @@ async function askLeBron() {
         const data = await response.json();
         // Remove loading indicator
         document.getElementById('geminiResponse').removeChild(loadingEl);
+    
+/* sentiment data is bugged asl 💔
+        const sentiment = await fetch("http://localhost:3000/ask-gemini", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ 
+                prompt: `Generate a human adjective. Add the two options together. NO OTHER OUTPUT.`
+            })
+        });
         
+        if (!sentiment.ok) {
+            throw new Error(`Server responded with status: ${sentiment.status}`);
+        }
+        
+        const sentimentData = 'lebron' + await sentiment.json();
+        console.log(sentimentData);
+*/
+
+        const leBronImage = await fetch("http://localhost:3000/gen-image", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ 
+                prompt: `lebron smile`
+            })
+        });
+        
+        if (!leBronImage.ok) {
+            throw new Error(`Server responded with status: ${sentiment.status}`);
+        }
+        const leBronImageData = await leBronImage.json();
+        console.log(leBronImageData);
+
+        document.getElementById('lebron').src = leBronImageData.response[Math.floor(Math.random() * 10)].link;
         // Add AI response to chat
         appendMessage('ai', data.response);
     } catch (error) {
