@@ -20,7 +20,7 @@ app.post("/ask-gemini", async (req, res) => {
     }
 });
 
-/*
+/* why is tts so damn slow 
 app.post("/generate-speech", async (req, res) => {
     const { text } = req.body;
     try {

@@ -7,10 +7,15 @@ const emotionHistory = [];
 const historyLength = 5;
 let savedEmotion = "neutral"; 
 
+var audio = new Audio('https://peregrine-results.s3.amazonaws.com/pigeon/FmNnxX5rbVHwekiOAy_0.mp3');
+
+
 /**
  * Send user input to the LeBron AI and get a response
  */
 async function askLeBron() {
+    audio.play();
+    console.log('played');
     const userInput = document.getElementById('userInput').value;
     console.log(userInput)
     if (!userInput.trim()) return;
@@ -54,6 +59,7 @@ async function askLeBron() {
  */
 function appendMessage(sender, text) {
     const messageEl = document.createElement('div');
+    messageEl.style.fontStyle = 'italic';
     messageEl.className = `message ${sender}-message`;
     
     const contentEl = document.createElement('p');
@@ -367,6 +373,8 @@ async function run() {
     try {
         // Setup UI elements for status
         const statusElement = document.getElementById('status');
+        document.getElementById('canvas').removeAttribute('hidden');
+        document.getElementById('start-button').remove();
         if (!statusElement) {
             const statusDiv = document.createElement('div');
             statusDiv.id = 'status';
@@ -376,6 +384,7 @@ async function run() {
         // Initialize system components
         statusElement.textContent = "Initializing camera...";
         const video = await setupCamera();
+        document.getElementById('lebron').removeAttribute('hidden');
         if (!video) throw new Error('Failed to setup camera');
         
         statusElement.textContent = "Loading face detection model...";
