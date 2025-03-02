@@ -6,17 +6,17 @@ const smoothingFactor = 0.8;
 const emotionHistory = [];
 const historyLength = 5;
 
-async function askGemini(prompt) {
+async function askLeBron() {
+    prompt = document.getElementById('geminiResponse').innerText;
+    console.log(prompt);
     const response = await fetch("http://localhost:3000/ask-gemini", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt })
+        body: 'Remember that you are still LeBron Gemini Therapist - the empathetic, encouraging, and pop culturally connected LeBron James. You are the sunshine.' + JSON.stringify({ prompt })
     });
-    const data = await response.json();
+        const data = await response.json();
     console.log(data.response);
 }
-
-askGemini("Hello, Gemini!");
 
 async function setupCamera() { 
     const video = document.getElementById('video');
@@ -83,7 +83,7 @@ console.log("frown", frownParam)
 if (leftEyebrowRaise < frownParam) {
     return "tweaking";
 } else if (rightEyebrowRaise < smileParam) {
-    return "happy";
+    return "sunshine";
 } else {
     return "neutral";
 }
@@ -202,7 +202,18 @@ async function run() {
 
                 msg = document.createElement('p');
                 msg.textContent = data.response;
+                user_input = document.createElement('input');
+                user_input.setAttribute('type', 'text');
+                user_input.setAttribute('class', 'userInput');
+                user_input.setAttribute('placeholder', 'Enter your response here');
+                submit = document.createElement('button');
+                submit.textContent = 'Submit';
+                submit.setAttribute('class', 'submit');
+                submit.setAttribute('onclick', 'askLeBron()');
                 document.getElementById('geminiResponse').appendChild(msg);
+                document.getElementById('geminiResponse').appendChild(user_input);
+                document.getElementById('geminiResponse').appendChild(submit);
+                document.getElementById('userInput').focus();
 
             }, 2500);
         }
@@ -213,43 +224,80 @@ async function run() {
 }
 
 async function calibrateHeadCoordinates(faceModel, video, ctx) {
-const calibrationDuration = 3000; // 3 seconds
-const calibrationKeypoints = [];
+    const calibrationDuration = 3000; // 3 seconds
+    const calibrationKeypoints = [];
+    const emotionElement = document.getElementById('emotion');
 
-console.log('Calibrating head coordinates...');
+    console.log('Calibrating head coordinates...');
+    emotionElement.textContent = "Calibrating... Please maintain a neutral expression";
 
-const startTime = Date.now();
-while (Date.now() - startTime < calibrationDuration) {
-const predictions = await faceModel.estimateFaces(video);
-if (predictions.length > 0) {
-    const { keypoints } = predictions[0];
-    calibrationKeypoints.push(keypoints);
-}
-ctx.clearRect(0, 0, 640, 480);
-ctx.drawImage(video, 0, 0, 640, 480);
-await new Promise(resolve => setTimeout(resolve, 100));
-}
+    const startTime = Date.now();
+    while (Date.now() - startTime < calibrationDuration) {
+        const predictions = await faceModel.estimateFaces(video);
+        if (predictions.length > 0) {
+            const { keypoints } = predictions[0];
+            calibrationKeypoints.push(keypoints);
+        }
+        ctx.clearRect(0, 0, 640, 480);
+        ctx.drawImage(video, 0, 0, 640, 480);
+        
+        // Add calibration progress animation
+        const progress = Math.min(100, Math.round((Date.now() - startTime) / calibrationDuration * 100));
+        
+        // Draw progress bar background
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+        ctx.fillRect(320 - 150, 400, 300, 20);
+        
+        // Draw progress bar
+        ctx.fillStyle = 'green';
+        ctx.fillRect(320 - 150, 400, 300 * progress / 100, 20);
+        
+        // Draw progress bar border
+        ctx.strokeStyle = 'white';
+        ctx.strokeRect(320 - 150, 400, 300, 20);
+        
+        // Add text instructions
+        ctx.fillStyle = 'white';
+        ctx.font = '16px Arial';
+        ctx.fillText('Calibrating - Keep a neutral expression', 320 - 140, 390);
+        
+        await new Promise(resolve => setTimeout(resolve, 100));
+    }
 
-console.log('Calibration complete');
+    console.log('Calibration complete');
+    emotionElement.textContent = "Calibration complete";
 
-// calculate average keypoints
-const averageKeypoints = calibrationKeypoints.reduce((acc, keypoints) => {
-return keypoints.map((point, index) => ({
-    x: acc[index].x + point.x,
-    y: acc[index].y + point.y
-}));
-}, Array(calibrationKeypoints[0].length).fill({ x: 0, y: 0 }))
-.map(point => ({
-x: point.x / calibrationKeypoints.length,
-y: point.y / calibrationKeypoints.length
-}));
+    // Calculate average keypoints
+    const averageKeypoints = calibrationKeypoints.reduce((acc, keypoints) => {
+        return keypoints.map((point, index) => ({
+            x: acc[index].x + point.x,
+            y: acc[index].y + point.y
+        }));
+    }, Array(calibrationKeypoints[0].length).fill({ x: 0, y: 0 }))
+    .map(point => ({
+        x: point.x / calibrationKeypoints.length,
+        y: point.y / calibrationKeypoints.length
+    }));
+    
+    // Show a nice completion animation
+    ctx.fillStyle = 'rgba(0, 255, 0, 0.3)';
+    ctx.fillRect(0, 0, 640, 480);
+    ctx.fillStyle = 'white';
+    ctx.font = '24px Arial';
+    ctx.fillText('Calibration Complete!', 320 - 120, 240);
+    
+    // Restore normal view after 1 second
+    setTimeout(() => {
+        ctx.clearRect(0, 0, 640, 480);
+        ctx.drawImage(video, 0, 0, 640, 480);
+    }, 1000);
+    
+    // Continue with your existing logic
+    console.log(averageKeypoints);
 
-console.log(averageKeypoints)
-
-// Update the emotion classification parameters based on the average keypoints
-frownParam =  Math.abs(averageKeypoints[1].y - averageKeypoints[5].y) - 1.5
-smileParam = Math.abs(averageKeypoints[0].y - averageKeypoints[4].y) - 3
+    // Update the emotion classification parameters based on the average keypoints
+    frownParam = Math.abs(averageKeypoints[1].y - averageKeypoints[5].y) - 1;
+    smileParam = Math.abs(averageKeypoints[0].y - averageKeypoints[4].y) - 3;
 }
 
 // Start the application when the page loads
-document.addEventListener('DOMContentLoaded', run);

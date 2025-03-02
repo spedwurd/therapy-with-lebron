@@ -3,13 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Face Detection with Emotion Recognition</title>
+    <title>LeBron Therapy Session</title>
     <link rel="stylesheet" href="styles.css"></link>
+    <link rel="icon" type="image/x-icon" href="/assets/favicon.ico">
 </head>
 <body>
     <h1>LeBron Therapy</h1>
-    <div class="container">
-        <video id="video" width="640" height="480" autoplay></video>
+    <div class="chat-container">
+        <img src="/assets/lebron.jpeg" alt="where is lebron 💔">
+        <button id="start-button" onclick="run()">START</button>
+        <video hidden id="video" width="640" height="480" autoplay></video>
         <canvas id="canvas" width="640" height="480"></canvas>
     </div>
     <div id="emotion">No face detected</div>

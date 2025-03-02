@@ -1,8 +1,12 @@
 @font-face {
     font-family: 'Diddy';
-    src:  url('recoleta-font.otf');
+    src:  url('/assets/recoleta-font.otf');
     font-weight: normal;
     font-style: normal;
+}
+
+* {
+    font-family: 'Diddy';
 }
 
 body { 
@@ -11,7 +15,6 @@ body {
     font-family: Arial, sans-serif;
     text-align: center;
     background-color: lightyellow;
-    font-family: 'Diddy';
 }
 .container {
     position: relative;
@@ -19,13 +22,12 @@ body {
     width: 640px;
 }
 video { 
-    width: 100%; 
-    height: auto; 
+    width: 10%; 
+    height: 10%; 
 }
-canvas { 
-    position: absolute; 
-    top: 0; 
-    left: 0; 
+canvas {
+    width: 205px;
+    height: 246px;
 }
 #emotion {
     margin-top: 10px;
@@ -54,4 +56,18 @@ h1 {
     cursor: pointer;
     border-radius: 4px;
 }
-</style>
+
+.chat-container {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-evenly;
+    align-items: center;
+    margin-top: 20px;
+}
+
+#start-button {
+    width: 125px;
+    height: 125px;
+    border-radius: 50%;
+    background-color: #4CAF50;
+}
