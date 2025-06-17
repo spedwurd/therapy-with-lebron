@@ -4,35 +4,32 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LeBron Therapy Session</title>
-    <link rel="stylesheet" href="styles.css"></link>
+    <link rel="stylesheet" href="styles.css" />
     <link rel="icon" type="image/x-icon" href="/assets/favicon.ico">
 </head>
 <body>
     <h1>Therapy with LeBron</h1>
     <div class="chat-container">
         <img id="lebron" src="/assets/lebron.jpg" hidden alt="where is lebron 💔">
-        <a id="start-button" onclick="run()">START</a>
+        <button id="start-button" onclick="run()">START</button>
         <canvas hidden id="canvas" width="640" height="480"></canvas>
         <video hidden id="video" width="640" height="480" autoplay></video>
     </div>
     <div id="emotion">A powerful healing session</div>
     <div id="status">that starts with a facial scan</div>
     <div id="savedEmotion"></div>
-    <div id="geminiResponse">
+    <div id="geminiResponse"></div>
     <div class="divider"></div>
 
     <div class="chat-input-container">
         <input type="text" id="userInput" placeholder="Type your message here...">
         <button id="send-button" onclick="askLeBron()">Send</button>
     </div>
-
-    </div>
     <!-- tensorflow 💔 -->
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/face-landmarks-detection"></script>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/face-detection"></script>
     <script src="app.js"></script> 
-    <script type="module" src="server.js"></script>
    
 
 </body>

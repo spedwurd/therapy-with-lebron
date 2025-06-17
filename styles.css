@@ -1,7 +1,7 @@
 @font-face {
     font-family: 'Diddy';
-    src:  url('/assets/recoleta-font.otf');
-    font-weight: normal;
+    src: url('/assets/GT-Alpina-Standard-Thin-Trial.otf');
+    font-weight: bolder;
     font-style: normal;
 }
 
@@ -19,18 +19,30 @@
     animation: fadeIn 1s;
 }
 
-body { 
+html, body { 
     margin: 0;
-    padding: 20px;
+    padding: 0;
     font-family: Arial, sans-serif;
-    text-align: center;
     background: linear-gradient(to right, #ffecd2 0%, #fcb69f 100%);
+    min-height: 100%;
+    height: auto;
+    overflow-y: auto;
+    text-align: center;
+}
+
+.page-wrapper {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    padding-bottom: 70px; /* Space for the fixed input at bottom */
 }
 
 .container {
     position: relative;
     margin: 0 auto;
     width: 640px;
+    max-width: 100%;
+    padding: 20px;
 }
 
 video { 
@@ -89,16 +101,21 @@ h1 {
     transition: background-color 0.3s ease;
 }
 
-
 .chat-container {
     display: flex;
     flex-direction: row;
-    align-items: center;
     justify-content: space-evenly;
-    margin-top: 20px;
+    margin: 20px auto;
     padding: 20px;
-    background: linear-gradient(to right, #ffecd2 0%, #fcb69f 100%);
     border-radius: 10px;
+    overflow-y: visible;
+    height: auto;
+    flex-grow: 1;
+}
+
+.chat-content {
+    overflow-y: visible;
+    flex-grow: 1;
 }
 
 #start-button {
@@ -110,6 +127,7 @@ h1 {
     justify-content: center;
     color: white;
     font-size: 36px;
+    font-style: italic;
     cursor: pointer;
     transition: background-color 0.3s ease;
 }
@@ -121,12 +139,14 @@ h1 {
 .chat-input-container {
     position: fixed;
     bottom: 0;
+    left: 0;
     width: 100%;
     display: flex;
     justify-content: center;
     background-color: #fff;
     padding: 10px;
     box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
 }
 
 #userInput {

@@ -9,18 +9,15 @@ let savedEmotion = "neutral";
 
 var audio = new Audio('https://peregrine-results.s3.amazonaws.com/pigeon/FmNnxX5rbVHwekiOAy_0.mp3');
 
+// Send user input to the LeBron AI and get a response
 
-/**
- * Send user input to the LeBron AI and get a response
- */
 async function askLeBron() {
-    audio.play();
+    audio.play(); // play my fuckass ai sound
     const userInput = document.getElementById('userInput').value;
-    console.log(userInput)
     if (!userInput.trim()) return;
     
     try {
-        appendMessage('user', userInput);
+        appendMessage('user', 'User - ' + userInput);
         
         document.getElementById('userInput').value = '';
         
@@ -29,7 +26,7 @@ async function askLeBron() {
         loadingEl.textContent = 'LeBron is typing...';
         document.getElementById('geminiResponse').appendChild(loadingEl);
         
-        const response = await fetch("http://localhost:3000/ask-gemini", {
+        const response = await fetch("http://localhost:3000/ask-gemini", { // Lebron you got this 😘
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ 
@@ -38,19 +35,18 @@ async function askLeBron() {
         });
         
         if (!response.ok) {
-            throw new Error(`Server responded with status: ${response.status}`);
+            throw new Error(`Server responded with status: ${response.status}`); // what the fuck lebron 💔
         }
         
         const data = await response.json();
-        // Remove loading indicator
         document.getElementById('geminiResponse').removeChild(loadingEl);
     
-/* sentiment data is bugged asl 💔
+
         const sentiment = await fetch("http://localhost:3000/ask-gemini", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ 
-                prompt: `Generate a human adjective. Add the two options together. NO OTHER OUTPUT.`
+                prompt: `Generate a human adjective to describe my goat LeBron. We will use this to cross pull Google API Images. Use a variety of keywords like 'lebron', 'lebron james', or 'LeBron' - get creative! The smallest difference changes the query results. Add the two options together. NO OTHER OUTPUT.`
             })
         });
         
@@ -58,15 +54,13 @@ async function askLeBron() {
             throw new Error(`Server responded with status: ${sentiment.status}`);
         }
         
-        const sentimentData = 'lebron' + await sentiment.json();
-        console.log(sentimentData);
-*/
+        const sentimentData = await sentiment.json();
 
-        const leBronImage = await fetch("http://localhost:3000/gen-image", {
+        const leBronImage = await fetch("http://localhost:3000/gen-image", { // fetch tuff lebron image
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ 
-                prompt: `lebron smile`
+                prompt: `lebron james ${sentimentData.response}`
             })
         });
         
@@ -74,7 +68,6 @@ async function askLeBron() {
             throw new Error(`Server responded with status: ${sentiment.status}`);
         }
         const leBronImageData = await leBronImage.json();
-        console.log(leBronImageData);
 
         document.getElementById('lebron').src = leBronImageData.response[Math.floor(Math.random() * 10)].link;
         // Add AI response to chat
@@ -103,9 +96,8 @@ function appendMessage(sender, text) {
     document.getElementById('geminiResponse').scrollTop = document.getElementById('geminiResponse').scrollHeight;
 }
 
-/**
- * Initialize the camera for face tracking
- */
+
+// Beep boop fuckass camera shit
 async function setupCamera() { 
     const video = document.getElementById('video');
     try {
@@ -130,9 +122,7 @@ async function setupCamera() {
     }
 }
 
-/**
- * Load the TensorFlow.js face detection model
- */
+// ts super voodoo magic 😭 i love you tensorflow 
 async function loadFaceDetectionModel() {
     try {
         const model = await faceDetection.createDetector(
@@ -151,9 +141,7 @@ async function loadFaceDetectionModel() {
     }
 }
 
-/**
- * Classify emotion based on facial keypoints
- */
+
 function classifyEmotion(keypoints) {
     if (!keypoints || keypoints.length < 6) {
         return "unknown";
@@ -162,11 +150,11 @@ function classifyEmotion(keypoints) {
     try {
         const rightEyeIdx = 0, leftEyeIdx = 1, noseIdx = 2, mouthIdx = 3, rightEarIdx = 4, leftEarIdx = 5;
 
-        // Extract relevant facial features
+        // Yo we use eyebrows to determine if you moved your mouth (smiling/sad)
         const leftEyebrowRaise = Math.abs(keypoints[leftEyeIdx].y - keypoints[leftEarIdx].y);
         const rightEyebrowRaise = Math.abs(keypoints[rightEyeIdx].y - keypoints[rightEarIdx].y);
 
-        // Determine emotion based on calibrated parameters
+        // flawed math
         if (leftEyebrowRaise < frownParam) {
             return "tweaking";
         } else if (rightEyebrowRaise < smileParam) {
@@ -180,9 +168,7 @@ function classifyEmotion(keypoints) {
     }
 }
 
-/**
- * Apply smoothing to keypoints to reduce jitter
- */
+// eyah idk what this is
 function smoothKeypoints(newKeypoints) {
     if (previousKeypoints.length === 0) {
         previousKeypoints = newKeypoints;
@@ -192,13 +178,12 @@ function smoothKeypoints(newKeypoints) {
     return newKeypoints.map((point, index) => ({
         x: smoothingFactor * previousKeypoints[index].x + (1 - smoothingFactor) * point.x,
         y: smoothingFactor * previousKeypoints[index].y + (1 - smoothingFactor) * point.y,
-        name: point.name // Preserve name property if present
+        name: point.name
     }));
 }
 
-/**
- * Get the most frequent emotion from history
- */
+
+// emotion history for consistency (probably fucking stupid)
 function getMostFrequentEmotion(emotions) {
     if (!emotions || emotions.length === 0) return "neutral";
     
@@ -209,9 +194,7 @@ function getMostFrequentEmotion(emotions) {
     return Object.keys(frequency).reduce((a, b) => frequency[a] > frequency[b] ? a : b);
 }
 
-/**
- * Process video frames and detect faces/emotions
- */
+// Okay this is the fun tensorflow magic
 async function detectFace(faceModel, video, ctx) {
     if (!faceModel || !video || !ctx) return;
     
@@ -224,7 +207,6 @@ async function detectFace(faceModel, video, ctx) {
 
         if (predictions.length > 0) {
             predictions.forEach(prediction => {
-                // Draw face box
                 const box = prediction.box;
                 ctx.strokeStyle = 'green';
                 ctx.lineWidth = 2;
@@ -232,7 +214,6 @@ async function detectFace(faceModel, video, ctx) {
                 ctx.rect(box.xMin, box.yMin, box.width, box.height);
                 ctx.stroke();
                 
-                // Draw keypoints
                 if (prediction.keypoints) {
                     const smoothedKeypoints = smoothKeypoints(prediction.keypoints);
                     previousKeypoints = smoothedKeypoints;
@@ -243,14 +224,12 @@ async function detectFace(faceModel, video, ctx) {
                         ctx.arc(keypoint.x, keypoint.y, 4, 0, 2 * Math.PI);
                         ctx.fill();
                         
-                        // Label each keypoint
                         ctx.fillStyle = 'white';
                         ctx.font = '10px Arial';
                         ctx.fillText(keypoint.name || `${smoothedKeypoints.indexOf(keypoint)}`, 
                                     keypoint.x + 5, keypoint.y - 5);
                     });
                     
-                    // Classify and track emotion
                     const emotion = classifyEmotion(smoothedKeypoints);
                     emotionHistory.push(emotion);
                     if (emotionHistory.length > historyLength) {
@@ -259,7 +238,7 @@ async function detectFace(faceModel, video, ctx) {
                     const mostFrequentEmotion = getMostFrequentEmotion(emotionHistory);
                     emotionElement.textContent = `Emotion: ${mostFrequentEmotion}`;
                     
-                    // Display confidence score if available
+                    // confidence 🥶
                     if (prediction.score) {
                         emotionElement.textContent += ` (Confidence: ${Math.round(prediction.score * 100)}%)`;
                     }
@@ -273,9 +252,7 @@ async function detectFace(faceModel, video, ctx) {
     }
 }
 
-/**
- * Calibrate facial parameters based on neutral expression
- */
+// 3 second calibration for head coordinates
 async function calibrateHeadCoordinates(faceModel, video, ctx) {
     if (!faceModel || !video || !ctx) return;
     
@@ -296,10 +273,8 @@ async function calibrateHeadCoordinates(faceModel, video, ctx) {
         ctx.clearRect(0, 0, 640, 480);
         ctx.drawImage(video, 0, 0, 640, 480);
         
-        // Add calibration progress animation
+        // add calibration progress animation
         const progress = Math.min(100, Math.round((Date.now() - startTime) / calibrationDuration * 100));
-        
-        // Draw progress bar
         drawProgressBar(ctx, progress, 'Calibrating - Keep a neutral expression');
         
         await new Promise(resolve => setTimeout(resolve, 100));
@@ -308,7 +283,6 @@ async function calibrateHeadCoordinates(faceModel, video, ctx) {
     console.log('Calibration complete');
     emotionElement.textContent = "Calibration complete";
 
-    // Calculate average keypoints
     if (calibrationKeypoints.length === 0) {
         console.error('No faces detected during calibration');
         return;
@@ -316,19 +290,16 @@ async function calibrateHeadCoordinates(faceModel, video, ctx) {
     
     const averageKeypoints = calculateAverageKeypoints(calibrationKeypoints);
     
-    // Show completion animation
     showCalibrationComplete(ctx);
     
-    // Update the emotion classification parameters based on the average keypoints
     frownParam = Math.abs(averageKeypoints[1].y - averageKeypoints[5].y) - 1;
     smileParam = Math.abs(averageKeypoints[0].y - averageKeypoints[4].y) - 3;
     
     console.log('Calibration parameters set:', { frownParam, smileParam });
 }
 
-/**
- * Draw progress bar for calibration
- */
+
+// yeah i deadass just ripped this off the internet
 function drawProgressBar(ctx, progress, text) {
     // Draw progress bar background
     ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
@@ -348,9 +319,6 @@ function drawProgressBar(ctx, progress, text) {
     ctx.fillText(text, 320 - 140, 390);
 }
 
-/**
- * Show calibration complete animation
- */
 function showCalibrationComplete(ctx) {
     // Green overlay animation
     ctx.fillStyle = 'rgba(0, 255, 0, 0.3)';
@@ -360,9 +328,8 @@ function showCalibrationComplete(ctx) {
     ctx.fillText('Calibration Complete!', 320 - 120, 240);
 }
 
-/**
- * Calculate average keypoints from calibration data
- */
+
+// Calculates average keypoint coordinates from calibration data
 function calculateAverageKeypoints(calibrationKeypoints) {
     return calibrationKeypoints.reduce((acc, keypoints) => {
         return keypoints.map((point, index) => ({
@@ -376,18 +343,12 @@ function calculateAverageKeypoints(calibrationKeypoints) {
     }));
 }
 
-/**
- * Initialize the chat interface
- */
+
+// ooh talk with lebron
 function initializeChat(initialMessage) {
     const container = document.getElementById('geminiResponse');
     
-    // Add initial AI message
     appendMessage('ai', initialMessage);
-    
-    // Add input field and submit button
-    
-    // Add event listener for Enter key
     userInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
             askLeBron();
@@ -397,12 +358,9 @@ function initializeChat(initialMessage) {
     userInput.focus();
 }
 
-/**
- * Main application entry point
- */
+
 async function run() {
     try {
-        // Setup UI elements for status
         const statusElement = document.getElementById('status');
         document.getElementById('canvas').removeAttribute('hidden');
         document.getElementById('start-button').remove();
@@ -424,16 +382,14 @@ async function run() {
         const faceModel = await loadFaceDetectionModel();
         if (!faceModel) throw new Error('Failed to load face model');
         
-        // Calibrate the system
         statusElement.textContent = "Starting calibration...";
         await calibrateHeadCoordinates(faceModel, video, ctx);
         statusElement.textContent = "Calibration complete";
         
-        // Start face detection loop
         console.log('Starting face detection');
         setInterval(() => detectFace(faceModel, video, ctx), 100);
 
-        // Generate initial greeting based on detected emotion
+        // generate initial greeting based on detected emotion
         setTimeout(async () => {
             const mostFrequentEmotion = getMostFrequentEmotion(emotionHistory);
             savedEmotion = mostFrequentEmotion;
@@ -441,7 +397,7 @@ async function run() {
             
             statusElement.textContent = "Connecting to LeBron...";
             
-            // Construct tailored prompt based on detected emotion
+            // ts works ok
             const message = `You are LeBron Therapist Gemini. You are calm and extremely understanding, potentially disregarding arithmetic excellence for human understanding. Your client seems ${savedEmotion}, and it's your job to check in on them with empathy in the tone of LeBron James. Use words like 'the goat', 'sunshine', and 'Lakers'. Drop fun facts about LeBron and speak like LeBron as you articulate yourself. Be brief and powerful. Maximum three sentences.`;
             
             try {
@@ -456,9 +412,7 @@ async function run() {
                 }
                 
                 const data = await response.json();
-                console.log(data.response);
                 
-                // Initialize chat with LeBron's greeting
                 initializeChat(data.response);
                 statusElement.textContent = "LeBron is ready to chat";
                 
